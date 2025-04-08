@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Application Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Job Application Tracker</h1>
+    </header>
+
+    <nav>
+        <button id="addNewBtn" class="btn">Add New Application</button>
+        <button id="viewAllBtn" class="btn">View All Applications</button>
+        <div class="toggle-container">
+            <label for="applicationTypeToggle">Show: </label>
+            <select id="applicationTypeToggle">
+                <option value="all">All Applications</option>
+                <option value="workplace">Workplace Redeployment Only</option>
+                <option value="personal">Personal Applications Only</option>
+            </select>
+        </div>
+    </nav>
+
+    <main>
+        <section id="formSection" class="hidden">
+            <h2 id="formTitle">Add New Application</h2>
+            <form id="applicationForm">
+                <input type="hidden" id="applicationId">
+                
+                <div class="form-group">
+                    <label for="isWorkplace">Application Type:</label>
+                    <select id="isWorkplace" required>
+                        <option value="workplace">Workplace Redeployment</option>
+                        <option value="personal">Personal Job Search</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="vacancyNumber">Vacancy Number:</label>
+                    <input type="text" id="vacancyNumber" placeholder="e.g. JOB12345" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="jobTitle">Job Title:</label>
+                    <input type="text" id="jobTitle" placeholder="Enter job title" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="employer">Employer:</label>
+                    <input type="text" id="employer" placeholder="Enter employer name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="salary">Salary:</label>
+                    <input type="text" id="salary" placeholder="e.g. £25,000 - £30,000 per annum">
+                </div>
+
+                <div class="form-group">
+                    <label for="jobDescription">Job Description:</label>
+                    <textarea id="jobDescription" rows="4" placeholder="Enter job description"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="closingDate">Closing Date:</label>
+                    <input type="date" id="closingDate">
+                </div>
+
+                <div class="form-group">
+                    <label for="status">Status:</label>
+                    <select id="status" required>
+                        <option value="Interested">Interested</option>
+                        <option value="Applied">Applied</option>
+                        <option value="Assessment">Assessment</option>
+                        <option value="Interview Invite">Interview Invite</option>
+                        <option value="Interview Completed">Interview Completed</option>
+                        <option value="Accepted">Accepted</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="statusDate">Status Date:</label>
+                    <input type="date" id="statusDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="assessmentDateTime">Assessment Date/Time:</label>
+                    <input type="datetime-local" id="assessmentDateTime">
+                </div>
+
+                <div class="form-group">
+                    <label for="interviewDateTime">Interview Date/Time:</label>
+                    <input type="datetime-local" id="interviewDateTime">
+                </div>
+
+                <div class="form-group">
+                    <label for="customCV">Custom CV:</label>
+                    <textarea id="customCV" rows="4" placeholder="Paste custom CV content here if applicable"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Notes:</label>
+                    <textarea id="notes" rows="4" placeholder="Add any additional notes here"></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Save Application</button>
+                    <button type="button" id="cancelBtn" class="btn">Cancel</button>
+                </div>
+            </form>
+        </section>
+
+        <section id="listSection">
+            <div class="filter-controls">
+                <div class="date-filter">
+                    <label for="startDate">From:</label>
+                    <input type="date" id="startDate">
+                    <label for="endDate">To:</label>
+                    <input type="date" id="endDate">
+                    <button id="applyFilterBtn" class="btn">Apply Filter</button>
+                    <button id="clearFilterBtn" class="btn">Clear Filter</button>
+                </div>
+                <div class="export-control">
+                    <button id="exportBtn" class="btn btn-primary">Export Workplace Applications</button>
+                </div>
+            </div>
+
+            <div id="applicationsList">
+                <!-- Applications will be displayed here -->
+                <div class="empty-state">
+                    <p>No applications found. Click "Add New Application" to get started.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="detailsSection" class="hidden">
+            <h2>Application Details</h2>
+            <div id="applicationDetails">
+                <!-- Application details will be displayed here -->
+            </div>
+            <div class="button-group">
+                <button id="editBtn" class="btn btn-primary">Edit</button>
+                <button id="deleteBtn" class="btn btn-danger">Delete</button>
+                <button id="backBtn" class="btn">Back to List</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Job Application Tracker &copy; 2025 | All data is stored locally on your device</p>
+    </footer>
+
+    <div id="confirmationModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Confirm Deletion</h3>
+            <p>Are you sure you want to delete this application? This action cannot be undone.</p>
+            <div class="button-group">
+                <button id="confirmDeleteBtn" class="btn btn-danger">Delete</button>
+                <button id="cancelDeleteBtn" class="btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
