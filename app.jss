@@ -234,4 +234,235 @@ document.addEventListener('DOMContentLoaded', function() {
                 <p><strong>Job Title:</strong> ${application.jobTitle}</p>
                 <p><strong>Vacancy Number:</strong> ${application.vacancyNumber}</p>
                 <p><strong>Employer:</strong> ${application.employer}</p>
-                <p
+                <p><strong>Salary:</strong> ${application.salary || 'Not specified'}</p>
+            </div>
+            
+            <div class="detail-group">
+                <h3>Job Description</h3>
+                <div class="detail-content">${application.jobDescription || 'No description provided'}</div>
+            </div>
+            
+            <div class="detail-group">
+                <h3>Status Information</h3>
+                <p><strong>Current Status:</strong> ${application.status}</p>
+                <p><strong>Status Date:</strong> ${formattedStatusDate}</p>
+                <p><strong>Closing Date:</strong> ${formattedClosingDate}</p>
+            </div>
+            
+            <div class="detail-group">
+                <h3>Important Dates</h3>
+                <p><strong>Assessment Date/Time:</strong> ${formattedAssessmentDateTime}</p>
+                <p><strong>Interview Date/Time:</strong> ${formattedInterviewDateTime}</p>
+            </div>
+            
+            ${application.customCV ? `
+            <div class="detail-group">
+                <h3>Custom CV</h3>
+                <div class="detail-content">${application.customCV}</div>
+            </div>
+            ` : ''}
+            
+            ${application.notes ? `
+            <div class="detail-group">
+                <h3>Notes</h3>
+                <div class="detail-content">${application.notes}</div>
+            </div>
+            ` : ''}
+        `;
+    }
+
+    function editCurrentApplication() {
+        const application = applications.find(app => app.id === currentApplicationId);
+        
+        if (!application) {
+            alert('Application not found!');
+            return;
+        }
+        
+        // Populate the form with current values
+        document.getElementById('applicationId').value = application.id;
+        document.getElementById('isWorkplace').value = application.isWorkplace;
+        document.getElementById('vacancyNumber').value = application.vacancyNumber;
+        document.getElementById('jobTitle').value = application.jobTitle;
+        document.getElementById('employer').value = application.employer;
+        document.getElementById('salary').value = application.salary;
+        document.getElementById('jobDescription').value = application.jobDescription;
+        document.getElementById('closingDate').value = application.closingDate;
+        document.getElementById('status').value = application.status;
+        document.getElementById('statusDate').value = application.statusDate;
+        document.getElementById('assessmentDateTime').value = application.assessmentDateTime;
+        document.getElementById('interviewDateTime').value = application.interviewDateTime;
+        document.getElementById('customCV').value = application.customCV;
+        document.getElementById('notes').value = application.notes;
+        
+        showEditForm();
+    }
+
+    function showDeleteConfirmation() {
+        confirmationModal.classList.remove('hidden');
+    }
+
+    function hideDeleteConfirmation() {
+        confirmationModal.classList.add('hidden');
+    }
+
+    function deleteApplication() {
+        applications = applications.filter(app => app.id !== currentApplicationId);
+        saveToLocalStorage();
+        hideDeleteConfirmation();
+        showListView();
+    }
+
+    function getFilteredApplications() {
+        return applications.filter(app => {
+            // Filter by type
+            if (activeFilters.type === 'workplace' && app.isWorkplace !== 'workplace') {
+                return false;
+            }
+            if (activeFilters.type === 'personal' && app.isWorkplace !== 'personal') {
+                return false;
+            }
+            
+            // Filter by date range
+            if (activeFilters.startDate || activeFilters.endDate) {
+                const appDate = new Date(app.statusDate);
+                
+                if (activeFilters.startDate && appDate < activeFilters.startDate) {
+                    return false;
+                }
+                
+                if (activeFilters.endDate) {
+                    const endDatePlus1 = new Date(activeFilters.endDate);
+                    endDatePlus1.setDate(endDatePlus1.getDate() + 1);
+                    
+                    if (appDate >= endDatePlus1) {
+                        return false;
+                    }
+                }
+            }
+            
+            return true;
+        });
+    }
+
+    function filterApplicationsByType() {
+        activeFilters.type = applicationTypeToggle.value;
+        renderApplicationsList();
+    }
+
+    function applyDateFilter() {
+        activeFilters.startDate = startDateInput.value ? new Date(startDateInput.value) : null;
+        activeFilters.endDate = endDateInput.value ? new Date(endDateInput.value) : null;
+        renderApplicationsList();
+    }
+
+    function clearDateFilter() {
+        startDateInput.value = '';
+        endDateInput.value = '';
+        activeFilters.startDate = null;
+        activeFilters.endDate = null;
+        renderApplicationsList();
+    }
+
+    function exportWorkplaceApplications() {
+        // Filter only workplace applications within the date range
+        const workplaceApplications = applications.filter(app => {
+            if (app.isWorkplace !== 'workplace') {
+                return false;
+            }
+            
+            // Apply date filters if set
+            if (activeFilters.startDate || activeFilters.endDate) {
+                const appDate = new Date(app.statusDate);
+                
+                if (activeFilters.startDate && appDate < activeFilters.startDate) {
+                    return false;
+                }
+                
+                if (activeFilters.endDate) {
+                    const endDatePlus1 = new Date(activeFilters.endDate);
+                    endDatePlus1.setDate(endDatePlus1.getDate() + 1);
+                    
+                    if (appDate >= endDatePlus1) {
+                        return false;
+                    }
+                }
+            }
+            
+            return true;
+        });
+        
+        if (workplaceApplications.length === 0) {
+            alert('No workplace applications found for the selected date range.');
+            return;
+        }
+        
+        // Create a worksheet from the filtered data
+        const worksheet = XLSX.utils.json_to_sheet(workplaceApplications.map(app => {
+            // Format dates for Excel
+            const formatDate = (dateString) => {
+                return dateString ? new Date(dateString).toLocaleDateString('en-GB') : '';
+            };
+            
+            const formatDateTime = (dateTimeString) => {
+                if (!dateTimeString) return '';
+                const date = new Date(dateTimeString);
+                return `${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+            };
+            
+            return {
+                'Vacancy Number': app.vacancyNumber,
+                'Job Title': app.jobTitle,
+                'Employer': app.employer,
+                'Salary': app.salary,
+                'Job Description': app.jobDescription,
+                'Closing Date': formatDate(app.closingDate),
+                'Status': app.status,
+                'Status Date': formatDate(app.statusDate),
+                'Assessment Date/Time': formatDateTime(app.assessmentDateTime),
+                'Interview Date/Time': formatDateTime(app.interviewDateTime),
+                'Notes': app.notes
+            };
+        }));
+        
+        // Set column widths
+        const wscols = [
+            {wch: 15}, // Vacancy Number
+            {wch: 30}, // Job Title
+            {wch: 25}, // Employer
+            {wch: 15}, // Salary
+            {wch: 50}, // Job Description
+            {wch: 15}, // Closing Date
+            {wch: 20}, // Status
+            {wch: 15}, // Status Date
+            {wch: 25}, // Assessment Date/Time
+            {wch: 25}, // Interview Date/Time
+            {wch: 50}  // Notes
+        ];
+        worksheet['!cols'] = wscols;
+        
+        // Create a workbook with the worksheet
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Workplace Applications');
+        
+        // Generate filename with date range
+        let filename = 'Workplace_Applications';
+        if (activeFilters.startDate && activeFilters.endDate) {
+            const startStr = activeFilters.startDate.toISOString().split('T')[0];
+            const endStr = activeFilters.endDate.toISOString().split('T')[0];
+            filename += `_${startStr}_to_${endStr}`;
+        }
+        filename += '.xlsx';
+        
+        // Export to XLSX file
+        XLSX.writeFile(workbook, filename);
+    }
+
+    function saveToLocalStorage() {
+        localStorage.setItem('applications', JSON.stringify(applications));
+    }
+
+    function generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    }
+});
